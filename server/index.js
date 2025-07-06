@@ -8,7 +8,6 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const pdfParse = require('pdf-parse');
 const axios = require('axios');
-// const Tesseract = require('tesseract.js');
 const fs = require('fs');
 const path = require('path');
 
@@ -16,9 +15,17 @@ const app = express();
 const PORT = 8000;
 const JWT_SECRET = 'your_jwt_secret_key';
 
+// ------------------------ MongoDB Connection ------------------------
+
 mongoose.connect('mongodb+srv://sarvamangalapoojitha:mongo@cluster1.xkopp.mongodb.net/Finance?retryWrites=true&w=majority')
     .then(() => console.log('Connected to MongoDB Atlas'))
     .catch((err) => console.error('MongoDB connection error:', err));
+
+mongoose.connection.on('connected', () => {
+    console.log('Mongoose connected to DB:', mongoose.connection.name);
+});
+
+// ------------------------ Schemas ------------------------
 
 const userSchema = new mongoose.Schema({
     userId: { type: String, unique: true },
@@ -33,12 +40,12 @@ const transactionSchema = new mongoose.Schema({
     amount: Number,
     category: String,
     description: String,
-    date: Date
+    date: { type: Date, default: Date.now }
 });
 
 const aggregateSchema = new mongoose.Schema({
     userId: { type: String, required: true },
-    month: String, // e.g., "2025-07"
+    month: String,
     income: Number,
     expense: Number,
     byCategory: [{ category: String, total: Number }],
@@ -55,22 +62,10 @@ const User = mongoose.model('User', userSchema, 'user');
 const Transaction = mongoose.model('Transaction', transactionSchema, 'transactions');
 const Aggregate = mongoose.model('Aggregate', aggregateSchema);
 
+// ------------------------ Middleware ------------------------
+
 app.use(cors());
 app.use(express.json());
-
-app.get('/ping', (req, res) => {
-    console.log('Ping received!');
-    res.send('pong');
-});
-
-const storage = multer.diskStorage({
-    destination: './uploads/',
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname);
-    }
-});
-
-const upload = multer({ storage });
 
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
@@ -84,11 +79,28 @@ function authenticateToken(req, res, next) {
     });
 }
 
+// ------------------------ File Upload ------------------------
+
+const storage = multer.diskStorage({
+    destination: './uploads/',
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + '-' + file.originalname);
+    }
+});
+const upload = multer({ storage });
+
+// ------------------------ Routes ------------------------
+
+app.get('/ping', (req, res) => {
+    res.send('pong');
+});
+
+// Register
 app.post('/api/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
         const hashed = await bcrypt.hash(password, 10);
-        const userId = bcrypt.genSaltSync(10).slice(-12); // Generate 12-char ID from salt
+        const userId = bcrypt.genSaltSync(10).slice(-12);
         const user = new User({ userId, username, email, password: hashed });
         await user.save();
         res.json({ message: 'User registered' });
@@ -97,6 +109,7 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
+// Login
 app.post('/api/login', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -111,50 +124,84 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// Auto categorize route using Gemini API
+// Auto-categorization
 app.post('/api/autocategorize', authenticateToken, async (req, res) => {
     const { description } = req.body;
 
     try {
-        const prompt = `Categorize the following transaction description into a financial category (e.g., Food, Rent, Transport, Entertainment, etc.): "${description}".`;
-
         const response = await axios.post(
-            'https://generativelanguage.googleapis.com/v1beta3/models/text-bison-001:generateText?key=AIzaSyDxG_Dn27XZ-OSeg_iWbGduohqD9gYrGiI',
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDxG_Dn27XZ-OSeg_iWbGduohqD9gYrGiI',
             {
-                prompt: { text: prompt },
-                temperature: 0.5,
-                candidateCount: 1
+                contents: [
+                    {
+                        parts: [
+                            {
+                                text: `
+You're a finance assistant. Categorize this transaction description:
+"${description}"
+
+Return only the category as one of:
+- Food
+- Groceries
+- Transport
+- Healthcare
+- Entertainment
+- Taxes (for GST, tax, etc.)
+- Summary (for Subtotal, Total lines)
+- Income
+- Rent
+- Bills & Utilities
+- Other
+
+If it’s unclear, return "Uncategorized".
+                `.trim()
+                            }
+                        ]
+                    }
+                ]
             }
         );
 
-        const category = response.data.candidates?.[0]?.output?.trim() || 'Uncategorized';
+        const output = response.data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        const category = output || 'Uncategorized';
+
         res.json({ category });
     } catch (err) {
-        console.error('Auto-categorization error:', err);
+        console.error('Auto-categorization error:', err.message);
         res.status(500).json({ message: 'Auto-categorization failed' });
     }
 });
 
+// Add transaction
 app.post('/api/transactions', authenticateToken, async (req, res) => {
-    const tx = new Transaction({ ...req.body, userId: req.user.userId });
-    await tx.save();
-    res.json({ message: 'Transaction added' });
-});
-
-app.get('/api/transactions', authenticateToken, async (req, res) => {
-    const { page = 1, limit = 10, start, end } = req.query;
-    const filter = { userId: req.user.userId };
-    if (start && end) {
-        filter.date = { $gte: new Date(start), $lte: new Date(end) };
+    try {
+        const tx = new Transaction({ ...req.body, userId: req.user.userId });
+        await tx.save();
+        res.json({ message: 'Transaction added', data: tx });
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to add transaction' });
     }
-    const transactions = await Transaction.find(filter)
-        .sort({ date: -1 })
-        .skip((page - 1) * limit)
-        .limit(Number(limit));
-    res.json(transactions);
 });
 
-// Get all unique categories used in transactions
+// List transactions
+app.get('/api/transactions', authenticateToken, async (req, res) => {
+    try {
+        const { page = 1, limit = 10, start, end } = req.query;
+        const filter = { userId: req.user.userId };
+        if (start && end) {
+            filter.date = { $gte: new Date(start), $lte: new Date(end) };
+        }
+        const transactions = await Transaction.find(filter)
+            .sort({ date: -1 })
+            .skip((page - 1) * limit)
+            .limit(Number(limit));
+        res.json(transactions);
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to fetch transactions' });
+    }
+});
+
+// Categories
 app.get('/api/categories', authenticateToken, async (req, res) => {
     try {
         const categories = await Transaction.distinct('category', { userId: req.user.userId });
@@ -164,29 +211,72 @@ app.get('/api/categories', authenticateToken, async (req, res) => {
     }
 });
 
-// Add frontend-friendly endpoint for fetching categories as HTML select options
+// HTML Categories
 app.get('/api/categories/html', authenticateToken, async (req, res) => {
     try {
         const categories = await Transaction.distinct('category', { userId: req.user.userId });
         const html = `
-      <label for="category">Category:</label>
-      <select name="category" id="category">
-        ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
-      </select>
-    `;
+            <label for="category">Category:</label>
+            <select name="category" id="category">
+                ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
+            </select>`;
         res.send(html);
     } catch (err) {
         res.status(500).send('<p>Failed to load categories</p>');
     }
 });
 
+// Upload PDF receipt
 app.post('/api/upload/pdf', authenticateToken, upload.single('file'), async (req, res) => {
-    const pdfPath = req.file.path;
-    const dataBuffer = fs.readFileSync(pdfPath);
-    const data = await pdfParse(dataBuffer);
-    fs.unlinkSync(pdfPath);
-    res.json({ text: data.text });
+    try {
+        const pdfPath = req.file.path;
+        const dataBuffer = fs.readFileSync(pdfPath);
+        const data = await pdfParse(dataBuffer);
+        fs.unlinkSync(pdfPath);
+        res.json({ text: data.text });
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to process PDF' });
+    }
 });
+
+// ------------------------ Chart APIs ------------------------
+
+// Group expenses by category (for pie chart)
+app.get('/api/summary/by-category', authenticateToken, async (req, res) => {
+    try {
+        const summary = await Transaction.aggregate([
+            { $match: { userId: req.user.userId, type: 'expense' } },
+            { $group: { _id: "$category", total: { $sum: "$amount" } } },
+            { $sort: { total: -1 } }
+        ]);
+        res.json(summary);
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to aggregate by category' });
+    }
+});
+
+// Group expenses by date (for line/bar chart)
+app.get('/api/summary/by-date', authenticateToken, async (req, res) => {
+    try {
+        const summary = await Transaction.aggregate([
+            { $match: { userId: req.user.userId, type: 'expense' } },
+            {
+                $group: {
+                    _id: {
+                        $dateToString: { format: "%Y-%m-%d", date: "$date" }
+                    },
+                    total: { $sum: "$amount" }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+        res.json(summary);
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to aggregate by date' });
+    }
+});
+
+// ------------------------ Server Start ------------------------
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);

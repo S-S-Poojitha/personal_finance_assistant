@@ -4,15 +4,35 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0093e779-4ba9-43ef-ba82-9dce9dce2955" name="Changes" comment="" />
+    <list default="true" id="0093e779-4ba9-43ef-ba82-9dce9dce2955" name="Changes" comment="">
+      <change beforePath="F:/Personal_Finance_Assistant/.idea/workspace.xml" beforeDir="false" afterPath="F:/Personal_Finance_Assistant/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="F:/Personal_Finance_Assistant/server/index.js" beforeDir="false" afterPath="F:/Personal_Finance_Assistant/server/index.js" afterDir="false" />
+      <change beforePath="F:/Personal_Finance_Assistant/server/middleware/auth.js" beforeDir="false" afterPath="F:/Personal_Finance_Assistant/server/middleware/auth.js" afterDir="false" />
+      <change beforePath="F:/Personal_Finance_Assistant/server/test.js" beforeDir="false" afterPath="F:/Personal_Finance_Assistant/server/test.js" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="F:/Personal_Finance_Assistant" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "S-S-Poojitha"
+  }
+}]]></component>
   <component name="GithubDefaultAccount">
     <option name="defaultAccountId" value="62a66229-0e6d-47d1-895f-7d59ea40069f" />
   </component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/S-S-Poojitha/personal_finance_assistant.git",
+    "accountId": "62a66229-0e6d-47d1-895f-7d59ea40069f"
+  }
+}]]></component>
   <component name="ProjectColorInfo"><![CDATA[{
   "associatedIndex": 6
 }]]></component>
@@ -23,7 +43,10 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Node.js.index.js.executor": "Run",
+    "Node.js.test.js.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -34,9 +57,16 @@
     "project.structure.proportion": "0.0",
     "project.structure.side.proportion": "0.0",
     "settings.editor.selected.configurable": "project.propVCSSupport.CommitDialog",
+    "ts.external.directory.path": "C:\\Program Files\\JetBrains\\IntelliJ IDEA 2024.3\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="F:\Personal_Finance_Assistant\server" />
+      <recent name="F:\Personal_Finance_Assistant\server\models" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -53,7 +83,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1751772355710</updated>
-      <workItem from="1751772357018" duration="472000" />
+      <workItem from="1751772357018" duration="16556000" />
     </task>
     <servers />
   </component>

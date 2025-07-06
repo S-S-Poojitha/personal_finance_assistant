@@ -29,7 +29,7 @@ const transactionSchema = new mongoose.Schema({
             'Food & Dining', 'Transportation', 'Shopping', 'Entertainment', 'Bills & Utilities',
             'Healthcare', 'Education', 'Travel', 'Groceries', 'Rent', 'Insurance',
             'Subscriptions', 'Personal Care', 'Clothing', 'Electronics', 'Home & Garden',
-            'Sports & Fitness', 'Gifts & Donations', 'Banking Fees', 'Taxes', 'Uncategorized'
+            'Sports & Fitness', 'Gifts & Donations', 'Banking Fees', 'Taxes','GST','Uncategorized'
         ]
     },
     description: {
