@@ -46,9 +46,16 @@ const uploadController = {
             fs.unlinkSync(pdfPath);
 
             console.log('✅ PDF processed, extracted', data.text.length, 'characters');
+            
+            // Debug: Log the first 500 characters to see what was extracted
+            console.log('📝 Extracted text preview:');
+            console.log(data.text.substring(0, 500));
+            console.log('...');
 
             // Process extracted text with AI
             const extractedTransactions = await aiService.parseReceiptWithGemini(data.text);
+            
+            console.log('🤖 AI processing result:', extractedTransactions.length, 'transactions found');
 
             if (extractedTransactions.length > 0) {
                 let successCount = 0;

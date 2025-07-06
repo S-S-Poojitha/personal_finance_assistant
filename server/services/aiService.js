@@ -118,11 +118,16 @@ If it's unclear, return "Uncategorized".
 
     // Parse receipt with AI
     parseReceiptWithGemini: async (receiptText) => {
+        console.log('🧠 Starting AI receipt parsing...');
+        console.log('📝 Input text length:', receiptText.length);
+        
         try {
             if (!process.env.GEMINI_API_KEY) {
+                console.log('⚠️ No Gemini API key, falling back to simple parsing');
                 return aiService.parseReceiptSimple(receiptText);
             }
 
+            console.log('🤖 Calling Gemini API...');
             const response = await axios.post(
                 `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
                 {
@@ -172,14 +177,18 @@ If no valid transactions found, return empty array: []
                 }
             );
             
+            console.log('✅ Gemini API responded');
             const geminiText = response.data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+            console.log('🔍 Gemini response preview:', geminiText ? geminiText.substring(0, 200) : 'No response');
             
             try {
                 const jsonMatch = geminiText.match(/\[[\s\S]*\]/);
                 if (jsonMatch) {
+                    console.log('📋 Found JSON in response, parsing...');
                     const transactions = JSON.parse(jsonMatch[0]);
+                    console.log('✅ Parsed', transactions.length, 'raw transactions');
                     
-                    return transactions.filter(tx => 
+                    const validTransactions = transactions.filter(tx => 
                         tx.description && 
                         tx.amount && 
                         typeof tx.amount === 'number' && 
@@ -192,20 +201,28 @@ If no valid transactions found, return empty array: []
                         ...tx,
                         date: new Date().toISOString().split('T')[0]
                     }));
+                    
+                    console.log('✅ Filtered to', validTransactions.length, 'valid transactions');
+                    return validTransactions;
+                } else {
+                    console.log('❌ No JSON array found in Gemini response');
                 }
             } catch (parseError) {
-                console.error('Failed to parse Gemini response:', parseError);
+                console.error('❌ Failed to parse Gemini response:', parseError.message);
             }
         } catch (error) {
-            console.error('Gemini API error:', error);
+            console.error('❌ Gemini API error:', error.message);
         }
         
+        console.log('🔄 Falling back to simple parsing...');
         return aiService.parseReceiptSimple(receiptText);
     },
 
     // Simple receipt parsing fallback
     parseReceiptSimple: (text) => {
+        console.log('🔧 Starting simple receipt parsing...');
         const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+        console.log('📄 Processing', lines.length, 'lines');
         const transactions = [];
         
         for (let i = 0; i < lines.length; i++) {
@@ -215,6 +232,7 @@ If no valid transactions found, return empty array: []
             
             if (amountMatch && !line.includes('total') && !line.includes('subtotal') && !line.includes('gst') && !line.includes('tax')) {
                 const amount = parseFloat(amountMatch[1]);
+                console.log('💰 Found potential amount:', amount, 'in line:', lines[i].substring(0, 50));
                 
                 if (amount > 0 && amount < 10000) {
                     let description = lines[i].replace(/(?:₹|rs\.?|\$)?\s*\d+\.?\d*/gi, '').trim();
@@ -224,6 +242,7 @@ If no valid transactions found, return empty array: []
                     }
                     
                     const result = aiService.smartCategorize(description, 'expense');
+                    console.log('✅ Added transaction:', description, '→', amount, '→', result.category);
                     
                     transactions.push({
                         type: result.type,
@@ -236,6 +255,7 @@ If no valid transactions found, return empty array: []
             }
         }
         
+        console.log('📊 Simple parsing result:', transactions.length, 'transactions found');
         return transactions;
     }
 };

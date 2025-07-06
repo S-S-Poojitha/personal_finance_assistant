@@ -19,13 +19,26 @@ class ApiService {
         const config = { ...defaultOptions, ...options };
 
         try {
+            console.log('🌐 Request:', config.method || 'GET', url);
             const response = await fetch(url, config);
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || `HTTP error! status: ${response.status}`);
+            
+            let data;
+            try {
+                data = await response.json();
+            } catch (parseError) {
+                console.error('❌ Failed to parse response as JSON:', parseError);
+                throw new Error(`Server response could not be parsed. Status: ${response.status}`);
             }
 
+            console.log('📡 Response:', response.status, response.statusText);
+
+            if (!response.ok) {
+                const errorMessage = data.message || data.error || `HTTP error! status: ${response.status}`;
+                console.error('❌ API Error:', response.status, errorMessage);
+                throw new Error(errorMessage);
+            }
+
+            console.log('✅ Request successful');
             return data;
         } catch (error) {
             console.error('API request failed:', error);
@@ -60,10 +73,20 @@ class ApiService {
 
     // Authentication
     async register(userData) {
-        return this.request('/auth/register', {
-            method: 'POST',
-            body: JSON.stringify(userData)
-        });
+        console.log('🔔 ApiService: Registering user:', userData.username);
+        console.log('🌐 ApiService: Request URL:', `${this.baseURL}/auth/register`);
+        
+        try {
+            const result = await this.request('/auth/register', {
+                method: 'POST',
+                body: JSON.stringify(userData)
+            });
+            console.log('✅ ApiService: Registration successful');
+            return result;
+        } catch (error) {
+            console.error('❌ ApiService: Registration failed:', error.message);
+            throw error;
+        }
     }
 
     async login(credentials) {

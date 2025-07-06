@@ -64,133 +64,13 @@ const UploadReceipt = ({ onTransactionAdded }) => {
     return { category: 'Uncategorized', type: detectedType };
   };
 
-  const parseReceiptWithGemini = async (receiptText) => {
-    try {
-      const response = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDxG_Dn27XZ-OSeg_iWbGduohqD9gYrGiI',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: `
-Analyze this Indian receipt/bill text and extract individual transactions:
-"${receiptText}"
-
-Extract each line item as a separate transaction. For each item, determine:
-1. Description (what was purchased/paid for)
-2. Amount (in rupees, extract just the number)
-3. Type (income or expense - receipts are usually expenses)
-4. Category from these predefined options:
-
-EXPENSE categories: ${predefinedCategories.expense.join(', ')}
-INCOME categories: ${predefinedCategories.income.join(', ')}
-
-Rules:
-- Skip totals, subtotals, taxes, and summary lines
-- Only extract actual items/services
-- Use Indian context for categorization
-- Amount should be numeric value only
-- Each transaction should be a separate object
-
-Respond with a JSON array of transactions:
-[
-  {
-    "description": "item description",
-    "amount": 125.50,
-    "type": "expense",
-    "category": "Food & Dining"
-  }
-]
-
-If no valid transactions found, return empty array: []
-                    `.trim()
-                  }
-                ]
-              }
-            ]
-          })
-        }
-      );
-      
-      if (response.ok) {
-        const data = await response.json();
-        const geminiText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        
-        try {
-          const jsonMatch = geminiText.match(/\[[\s\S]*\]/);
-          if (jsonMatch) {
-            const transactions = JSON.parse(jsonMatch[0]);
-            
-            return transactions.filter(tx => 
-              tx.description && 
-              tx.amount && 
-              typeof tx.amount === 'number' && 
-              tx.amount > 0 && 
-              tx.amount < 100000 && 
-              tx.type &&
-              tx.category &&
-              predefinedCategories[tx.type]?.includes(tx.category)
-            ).map(tx => ({
-              ...tx,
-              date: new Date().toISOString().split('T')[0]
-            }));
-          }
-        } catch (parseError) {
-          console.error('Failed to parse Gemini response:', parseError);
-        }
-      }
-    } catch (error) {
-      console.error('Gemini API error:', error);
-    }
-    
-    return parseReceiptSimple(receiptText);
-  };
-
-  const parseReceiptSimple = (text) => {
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
-    const transactions = [];
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].toLowerCase();
-      
-      const amountMatch = line.match(/(?:₹|rs\.?|\$)?\s*(\d+\.?\d*)/);
-      
-      if (amountMatch && !line.includes('total') && !line.includes('subtotal') && !line.includes('gst') && !line.includes('tax')) {
-        const amount = parseFloat(amountMatch[1]);
-        
-        if (amount > 0 && amount < 10000) {
-          let description = lines[i].replace(/(?:₹|rs\.?|\$)?\s*\d+\.?\d*/gi, '').trim();
-          
-          if (!description || description.length < 3) {
-            description = i > 0 ? lines[i-1] : `Item ${transactions.length + 1}`;
-          }
-          
-          const result = smartCategorize(description, 'expense');
-          
-          transactions.push({
-            type: result.type,
-            amount: amount,
-            category: result.category,
-            description: description,
-            date: new Date().toISOString().split('T')[0]
-          });
-        }
-      }
-    }
-    
-    return transactions;
-  };
-
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
     
     setLoading(true);
     setError('');
+    setSuccess('');
     
     try {
       const formData = new FormData();
@@ -210,32 +90,16 @@ If no valid transactions found, return empty array: []
         throw new Error(data.message);
       }
       
-      const extractedTransactions = await parseReceiptWithGemini(data.text);
-      
-      if (extractedTransactions.length > 0) {
-        let successCount = 0;
+      // Backend now handles all processing and saves transactions automatically
+      if (data.transactionsAdded && data.transactionsAdded > 0) {
+        setSuccess(data.message);
         
-        for (const transaction of extractedTransactions) {
-          try {
-            await apiService.post('/transactions', transaction);
-            successCount++;
-          } catch (err) {
-            console.error('Failed to add transaction:', err);
-          }
-        }
-        
-        if (successCount > 0) {
-          setSuccess(`Successfully processed receipt! Added ${successCount} transaction(s) with AI categorization.`);
-          
-          // Callback to notify parent component
-          if (onTransactionAdded) {
-            onTransactionAdded();
-          }
-        } else {
-          setError('Failed to add transactions to database');
+        // Callback to notify parent component to refresh data
+        if (onTransactionAdded) {
+          onTransactionAdded();
         }
       } else {
-        setSuccess('Receipt processed but no valid transactions were detected.');
+        setSuccess(data.message || 'Receipt processed but no valid transactions were detected.');
       }
       
     } catch (err) {

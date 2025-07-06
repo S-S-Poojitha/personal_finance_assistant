@@ -95,11 +95,13 @@ function MainApp() {
             <LoginForm 
               onSuccess={handleLoginSuccess} 
               onError={setError}
+              onToggleView={setCurrentView}
             />
           ) : (
             <RegisterForm 
               onSuccess={handleRegisterSuccess} 
               onError={setError}
+              onToggleView={setCurrentView}
             />
           )}
         </div>

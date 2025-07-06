@@ -770,6 +770,9 @@ const transactionSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema, 'user');
 const Transaction = mongoose.model('Transaction', transactionSchema, 'transactions');
 
+// Import AI service
+const aiService = require('./services/aiService');
+
 // ------------------------ Middleware ------------------------
 
 // CORS configuration based on environment
@@ -863,16 +866,30 @@ app.post('/api/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
 
+        console.log('📝 Registration attempt for:', username, 'with email:', email);
+        console.log('📦 Request body received:', { username: !!username, email: !!email, password: !!password });
+
         // Input validation
         if (!username || !email || !password) {
+            console.log('❌ Missing required fields');
             return res.status(400).json({ message: 'All fields are required' });
         }
 
         if (password.length < 6) {
+            console.log('❌ Password too short');
             return res.status(400).json({ message: 'Password must be at least 6 characters' });
         }
 
-        console.log('📝 Registration attempt for:', username);
+        // Check for existing user
+        const existingUser = await User.findOne({ 
+            $or: [{ username }, { email }] 
+        });
+        
+        if (existingUser) {
+            const duplicateField = existingUser.username === username ? 'username' : 'email';
+            console.log('❌ Duplicate field:', duplicateField);
+            return res.status(400).json({ message: `${duplicateField} already exists` });
+        }
 
         const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10;
         const hashed = await bcrypt.hash(password, saltRounds);
@@ -884,7 +901,12 @@ app.post('/api/register', async (req, res) => {
         console.log('✅ User registered successfully:', username);
         res.json({ message: 'User registered successfully' });
     } catch (err) {
-        console.error('❌ Registration error:', err.message);
+        console.error('❌ Registration error details:', {
+            message: err.message,
+            code: err.code,
+            keyPattern: err.keyPattern,
+            stack: err.stack
+        });
         
         if (err.code === 11000) {
             const field = Object.keys(err.keyPattern)[0];
@@ -1096,7 +1118,44 @@ app.post('/api/upload/pdf', authenticateToken, upload.single('file'), async (req
         fs.unlinkSync(pdfPath);
 
         console.log('✅ PDF processed, extracted', data.text.length, 'characters');
-        res.json({ text: data.text });
+        console.log('📝 Extracted text preview:', data.text.substring(0, 500));
+        
+        // Process extracted text with AI to get transactions
+        const extractedTransactions = await aiService.parseReceiptWithGemini(data.text);
+        console.log('🤖 AI processing complete, found', extractedTransactions.length, 'transactions');
+
+        if (extractedTransactions.length > 0) {
+            let successCount = 0;
+            
+            for (const transaction of extractedTransactions) {
+                try {
+                    const newTransaction = new Transaction({
+                        ...transaction,
+                        userId: req.user.userId
+                    });
+                    await newTransaction.save();
+                    successCount++;
+                    console.log('✅ Saved transaction:', transaction.description, '→', transaction.amount);
+                } catch (err) {
+                    console.error('❌ Failed to save transaction:', err.message);
+                }
+            }
+            
+            if (successCount > 0) {
+                res.json({
+                    message: `Successfully processed receipt! Added ${successCount} transaction(s) with AI categorization.`,
+                    transactionsAdded: successCount,
+                    text: data.text
+                });
+            } else {
+                res.status(400).json({ message: 'Failed to add transactions to database' });
+            }
+        } else {
+            res.json({
+                message: 'Receipt processed but no valid transactions were detected.',
+                text: data.text
+            });
+        }
     } catch (err) {
         console.error('❌ PDF processing error:', err.message);
         res.status(500).json({ message: 'Failed to process PDF' });
