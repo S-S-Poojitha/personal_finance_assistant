@@ -5,15 +5,27 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0093e779-4ba9-43ef-ba82-9dce9dce2955" name="Changes" comment="">
+      <change afterPath="F:/Personal_Finance_Assistant/frontend/package.json" afterDir="false" />
+      <change afterPath="F:/Personal_Finance_Assistant/frontend/public/index.html" afterDir="false" />
+      <change afterPath="F:/Personal_Finance_Assistant/frontend/src/App.js" afterDir="false" />
+      <change afterPath="F:/Personal_Finance_Assistant/frontend/src/index.css" afterDir="false" />
+      <change afterPath="F:/Personal_Finance_Assistant/frontend/src/index.js" afterDir="false" />
       <change beforePath="F:/Personal_Finance_Assistant/.idea/workspace.xml" beforeDir="false" afterPath="F:/Personal_Finance_Assistant/.idea/workspace.xml" afterDir="false" />
       <change beforePath="F:/Personal_Finance_Assistant/server/index.js" beforeDir="false" afterPath="F:/Personal_Finance_Assistant/server/index.js" afterDir="false" />
-      <change beforePath="F:/Personal_Finance_Assistant/server/middleware/auth.js" beforeDir="false" afterPath="F:/Personal_Finance_Assistant/server/middleware/auth.js" afterDir="false" />
-      <change beforePath="F:/Personal_Finance_Assistant/server/test.js" beforeDir="false" afterPath="F:/Personal_Finance_Assistant/server/test.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="CSS File" />
+        <option value="HTML File" />
+        <option value="package.json" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="F:/Personal_Finance_Assistant" />
@@ -43,11 +55,13 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
     "Node.js.index.js.executor": "Run",
     "Node.js.test.js.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
+    "list.type.of.created.stylesheet": "CSS",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -63,6 +77,8 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="F:\Personal_Finance_Assistant\frontend\src" />
+      <recent name="F:\Personal_Finance_Assistant" />
       <recent name="F:\Personal_Finance_Assistant\server" />
       <recent name="F:\Personal_Finance_Assistant\server\models" />
     </key>
@@ -83,7 +99,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1751772355710</updated>
-      <workItem from="1751772357018" duration="16556000" />
+      <workItem from="1751772357018" duration="24808000" />
     </task>
     <servers />
   </component>
