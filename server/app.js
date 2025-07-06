@@ -118,6 +118,7 @@ const server = app.listen(PORT, () => {
     console.log('   GET  /api/transactions/summary/by-category');
     console.log('   GET  /api/transactions/summary/by-date');
     console.log('   POST /api/upload/pdf');
+    console.log('   POST /api/upload/image');
     console.log('🎯 Ready to accept requests!');
 });
 

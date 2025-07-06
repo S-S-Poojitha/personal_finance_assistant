@@ -257,6 +257,83 @@ If no valid transactions found, return empty array: []
         
         console.log('📊 Simple parsing result:', transactions.length, 'transactions found');
         return transactions;
+    },
+
+    // Process image with Gemini Vision API to extract text
+    processImageWithGemini: async (imagePath) => {
+        const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+        
+        if (!GEMINI_API_KEY) {
+            throw new Error('Gemini API key not configured');
+        }
+
+        try {
+            console.log('🖼️ Processing image with Gemini Vision API:', imagePath);
+
+            // Read image file and convert to base64
+            const fs = require('fs');
+            const imageBuffer = fs.readFileSync(imagePath);
+            const base64Image = imageBuffer.toString('base64');
+            
+            // Determine image MIME type based on file extension
+            const path = require('path');
+            const ext = path.extname(imagePath).toLowerCase();
+            let mimeType = 'image/jpeg'; // default
+            
+            if (ext === '.png') mimeType = 'image/png';
+            else if (ext === '.jpg' || ext === '.jpeg') mimeType = 'image/jpeg';
+            else if (ext === '.webp') mimeType = 'image/webp';
+
+            console.log('📷 Image details - Size:', imageBuffer.length, 'bytes, Type:', mimeType);
+
+            const response = await axios.post(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+                {
+                    contents: [
+                        {
+                            parts: [
+                                {
+                                    text: "Extract all text from this receipt/bill image. Focus on transaction details, amounts, dates, and merchant information. Return only the extracted text, nothing else."
+                                },
+                                {
+                                    inline_data: {
+                                        mime_type: mimeType,
+                                        data: base64Image
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    generationConfig: {
+                        temperature: 0.1,
+                        topK: 1,
+                        topP: 1,
+                        maxOutputTokens: 2048,
+                    }
+                },
+                {
+                    timeout: 30000, // 30 seconds timeout
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            if (response.data && response.data.candidates && response.data.candidates[0]) {
+                const extractedText = response.data.candidates[0].content.parts[0].text;
+                console.log('✅ Gemini Vision API extracted text length:', extractedText.length);
+                return extractedText;
+            } else {
+                console.log('⚠️ No text extracted from image');
+                return '';
+            }
+        } catch (error) {
+            console.error('❌ Gemini Vision API error:', error.message);
+            if (error.response) {
+                console.error('📡 API Response:', error.response.status, error.response.data);
+            }
+            throw new Error(`Image OCR failed: ${error.message}`);
+        }
     }
 };
 

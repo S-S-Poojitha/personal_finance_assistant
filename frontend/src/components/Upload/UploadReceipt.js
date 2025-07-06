@@ -10,6 +10,7 @@ const UploadReceipt = ({ onTransactionAdded }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [uploadType, setUploadType] = useState('pdf'); // 'pdf' or 'image'
 
   const smartCategorize = (description, transactionType = 'expense') => {
     const desc = description.toLowerCase();
@@ -76,7 +77,21 @@ const UploadReceipt = ({ onTransactionAdded }) => {
       const formData = new FormData();
       formData.append('file', file);
       
-      const response = await fetch(`${API_BASE}/upload/pdf`, {
+      // Determine endpoint based on file type
+      let endpoint = '/upload/pdf';
+      const fileType = file.type;
+      
+      if (fileType.startsWith('image/')) {
+        endpoint = '/upload/image';
+        console.log('🖼️ Uploading image:', file.name, 'Type:', fileType);
+      } else if (fileType === 'application/pdf') {
+        endpoint = '/upload/pdf';
+        console.log('📄 Uploading PDF:', file.name);
+      } else {
+        throw new Error('Unsupported file type. Please upload PDF or image files only.');
+      }
+      
+      const response = await fetch(`${API_BASE}${endpoint}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -116,19 +131,55 @@ const UploadReceipt = ({ onTransactionAdded }) => {
       <AlertMessage error={error} success={success} />
       
       <div className="space-y-6">
+        {/* Upload Type Selector */}
+        <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
+          <button
+            onClick={() => setUploadType('pdf')}
+            className={`flex-1 py-3 px-4 rounded-md font-medium text-sm transition-colors ${
+              uploadType === 'pdf' 
+                ? 'bg-indigo-600 text-white shadow-sm' 
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            📄 PDF Receipt
+          </button>
+          <button
+            onClick={() => setUploadType('image')}
+            className={`flex-1 py-3 px-4 rounded-md font-medium text-sm transition-colors ${
+              uploadType === 'image' 
+                ? 'bg-indigo-600 text-white shadow-sm' 
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            🖼️ Image Receipt
+          </button>
+        </div>
+
+        {/* Upload Area */}
         <div className="border-2 border-dashed border-indigo-300 rounded-lg p-8 text-center bg-indigo-50">
           <Upload className="h-16 w-16 text-indigo-400 mx-auto mb-4" />
-          <h3 className="text-xl font-medium text-indigo-900 mb-2">Upload PDF Receipt</h3>
+          <h3 className="text-xl font-medium text-indigo-900 mb-2">
+            {uploadType === 'pdf' ? 'Upload PDF Receipt' : 'Upload Image Receipt'}
+          </h3>
           <p className="text-indigo-700 mb-6">
-            Select a PDF receipt and let our AI extract transactions automatically
+            {uploadType === 'pdf' 
+              ? 'Select a PDF receipt and let our AI extract transactions automatically'
+              : 'Take a photo or select an image of your receipt for AI processing'
+            }
           </p>
           <input
             type="file"
-            accept=".pdf"
+            accept={uploadType === 'pdf' ? '.pdf' : 'image/*,.jpg,.jpeg,.png,.webp'}
             onChange={handleFileUpload}
             disabled={loading}
             className="block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 file:cursor-pointer cursor-pointer disabled:opacity-50"
           />
+          <p className="text-xs text-gray-500 mt-2">
+            {uploadType === 'pdf' 
+              ? 'Supported: PDF files (max 5MB)'
+              : 'Supported: JPG, PNG, WebP images (max 5MB)'
+            }
+          </p>
         </div>
         
         <div className="bg-green-50 rounded-lg p-6">
@@ -137,7 +188,7 @@ const UploadReceipt = ({ onTransactionAdded }) => {
             <ul className="text-sm text-green-800 space-y-2">
               <li className="flex items-center">
                 <span className="w-2 h-2 bg-green-600 rounded-full mr-3"></span>
-                Smart text extraction from PDF receipts
+                Smart text extraction from PDFs & images
               </li>
               <li className="flex items-center">
                 <span className="w-2 h-2 bg-green-600 rounded-full mr-3"></span>
@@ -151,7 +202,7 @@ const UploadReceipt = ({ onTransactionAdded }) => {
             <ul className="text-sm text-green-800 space-y-2">
               <li className="flex items-center">
                 <span className="w-2 h-2 bg-green-600 rounded-full mr-3"></span>
-                Indian currency format support
+                Image OCR with Vision API
               </li>
               <li className="flex items-center">
                 <span className="w-2 h-2 bg-green-600 rounded-full mr-3"></span>
