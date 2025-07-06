@@ -1,28 +1,52 @@
 {
-  "name": "personal-finance-assistant-server",
+  "name": "personal-finance-assistant-backend",
   "version": "1.0.0",
-  "description": "Backend server for the Personal Finance Assistant app",
-  "main": "index.js",
+  "description": "Backend API for Personal Finance Assistant with AI-powered categorization",
+  "main": "app.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint *.js",
+    "lint:fix": "eslint *.js --fix"
   },
-  "keywords": [],
+  "keywords": [
+    "finance",
+    "expense-tracker",
+    "nodejs",
+    "express",
+    "mongodb",
+    "ai",
+    "gemini",
+    "jwt",
+    "rest-api"
+  ],
   "author": "Your Name",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "axios": "^1.6.8",
-    "bcrypt": "^6.0.0",
+    "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
-    "express": "^5.1.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.16.1",
-    "multer": "^2.0.1",
-    "pdf-parse": "^1.1.1",
-    "tesseract.js": "^6.0.1"
-  }
-,
+    "multer": "^1.4.5-lts.1",
+    "pdf-parse": "^1.1.1"
+  },
   "devDependencies": {
+    "eslint": "^8.57.0",
     "nodemon": "^3.1.10"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/personal-finance-assistant.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/personal-finance-assistant/issues"
   }
 }

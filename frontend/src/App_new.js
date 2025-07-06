@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import apiService from './services/apiService';
+import { apiService } from './services/apiService';
 import Header from './components/Layout/Header';
 import LoginForm from './components/Auth/LoginForm';
 import RegisterForm from './components/Auth/RegisterForm';
@@ -12,7 +12,7 @@ import Analytics from './components/Analytics/Analytics';
 import AlertMessage from './components/UI/AlertMessage';
 
 function MainApp() {
-  const { token, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const [currentView, setCurrentView] = useState('login');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -34,15 +34,15 @@ function MainApp() {
     } else {
       setCurrentView('login');
     }
-  }, [token]); // fetchTransactions is stable, no need to include in deps
+  }, [token]);
 
   const handleLoginSuccess = () => {
-    setSuccess('🎉 Welcome back! Login successful.');
+    setSuccess('Login successful!');
     setCurrentView('dashboard');
   };
 
   const handleRegisterSuccess = () => {
-    setSuccess('🎉 Registration successful! Please login with your credentials.');
+    setSuccess('Registration successful! Please login.');
     setCurrentView('login');
   };
 
@@ -54,7 +54,7 @@ function MainApp() {
 
   const handleTransactionAdded = () => {
     fetchTransactions(); // Refresh transactions when new ones are added
-    setSuccess('💰 Transaction added successfully! Your data has been updated.');
+    setSuccess('Transaction added successfully!');
   };
 
   const clearMessages = () => {
@@ -119,11 +119,11 @@ function MainApp() {
         <AlertMessage error={error} success={success} onClear={clearMessages} />
         
         {currentView === 'dashboard' && (
-          <Dashboard onError={setError} />
+          <Dashboard transactions={transactions} />
         )}
         
         {currentView === 'analytics' && (
-          <Analytics />
+          <Analytics transactions={transactions} />
         )}
         
         {currentView === 'transactions' && (

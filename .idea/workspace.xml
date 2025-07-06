@@ -5,13 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0093e779-4ba9-43ef-ba82-9dce9dce2955" name="Changes" comment="">
-      <change afterPath="F:/Personal_Finance_Assistant/frontend/package.json" afterDir="false" />
-      <change afterPath="F:/Personal_Finance_Assistant/frontend/public/index.html" afterDir="false" />
-      <change afterPath="F:/Personal_Finance_Assistant/frontend/src/App.js" afterDir="false" />
-      <change afterPath="F:/Personal_Finance_Assistant/frontend/src/index.css" afterDir="false" />
-      <change afterPath="F:/Personal_Finance_Assistant/frontend/src/index.js" afterDir="false" />
       <change beforePath="F:/Personal_Finance_Assistant/.idea/workspace.xml" beforeDir="false" afterPath="F:/Personal_Finance_Assistant/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="F:/Personal_Finance_Assistant/server/index.js" beforeDir="false" afterPath="F:/Personal_Finance_Assistant/server/index.js" afterDir="false" />
+      <change beforePath="F:/Personal_Finance_Assistant/frontend/src/App.js" beforeDir="false" afterPath="F:/Personal_Finance_Assistant/frontend/src/App.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -99,7 +94,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1751772355710</updated>
-      <workItem from="1751772357018" duration="24808000" />
+      <workItem from="1751772357018" duration="27047000" />
     </task>
     <servers />
   </component>
