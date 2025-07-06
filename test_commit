@@ -1,0 +1,32 @@
+this is a personal tracker of directory of form
+personal-finance-assistant/
+├── server/                         # Node.js backend
+│   ├── index.js                   # Main entry point (your current code)
+│   ├── models/                    # Mongoose schemas
+│   │   ├── User.js
+│   │   └── Transaction.js
+│   ├── routes/                    # API route handlers (optional split)
+│   │   ├── auth.js
+│   │   ├── transactions.js
+│   │   └── upload.js
+│   ├── middleware/                # JWT auth, error handling, etc.
+│   │   └── auth.js
+│   ├── uploads/                   # Uploaded receipts and PDFs
+│   ├── utils/                     # Helper functions (OCR, PDF parsing)
+│   │   ├── ocr.js
+│   │   └── pdfParser.js
+│   └── package.json
+│
+├── client/                        # React frontend
+│   ├── public/
+│   ├── src/
+│   │   ├── components/            # Reusable components (forms, tables)
+│   │   ├── pages/                 # Page-level components (Dashboard, Login)
+│   │   ├── services/              # API utilities (axios configs)
+│   │   ├── App.jsx
+│   │   └── index.js
+│   └── package.json
+│
+├── .env                           # Environment variables for backend
+├── README.md
+└── .gitignore
