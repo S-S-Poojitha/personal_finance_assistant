@@ -8,7 +8,6 @@ import Dashboard from './components/Dashboard/Dashboard';
 import TransactionList from './components/Transactions/TransactionList';
 import AddTransaction from './components/Transactions/AddTransaction';
 import UploadReceipt from './components/Upload/UploadReceipt';
-import Analytics from './components/Analytics/Analytics';
 import AlertMessage from './components/UI/AlertMessage';
 
 function MainApp() {
@@ -122,10 +121,6 @@ function MainApp() {
         
         {currentView === 'dashboard' && (
           <Dashboard onError={setError} />
-        )}
-        
-        {currentView === 'analytics' && (
-          <Analytics />
         )}
         
         {currentView === 'transactions' && (

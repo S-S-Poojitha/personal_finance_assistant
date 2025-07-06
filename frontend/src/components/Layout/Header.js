@@ -11,7 +11,6 @@ const Header = ({ currentView, setCurrentView }) => {
 
     const navItems = [
         { key: 'dashboard', label: 'Dashboard' },
-        { key: 'analytics', label: 'Analytics' },
         { key: 'transactions', label: 'Transactions' },
         { key: 'add-transaction', label: 'Add Transaction' },
         { key: 'upload', label: 'Upload Receipt' }
