@@ -19,18 +19,6 @@ const Dashboard = ({ onError }) => {
         try {
             setLoading(true);
             
-            // Debug: Check current user
-            const token = localStorage.getItem('token');
-            if (token) {
-                try {
-                    const payload = JSON.parse(atob(token.split('.')[1]));
-                    console.log('👤 Current logged-in user ID:', payload.userId);
-                    console.log('🕐 Token expires:', new Date(payload.exp * 1000));
-                } catch (e) {
-                    console.log('❌ Invalid token format');
-                }
-            }
-            
             // Fetch ALL transactions and category summaries
             const [allTransactionsRes, expenseCategoryRes, incomeCategoryRes, dateRes] = await Promise.all([
                 apiService.getTransactions({ limit: 1000 }), // Get many transactions for totals
@@ -41,72 +29,8 @@ const Dashboard = ({ onError }) => {
 
             const allTransactions = Array.isArray(allTransactionsRes) ? allTransactionsRes : allTransactionsRes.transactions || [];
             
-            // CRITICAL DEBUG: Log the raw API response
-            console.log('🔍 RAW API RESPONSE from getTransactions({ limit: 1000 }):', allTransactionsRes);
-            console.log('🔍 Processed transactions array:', allTransactions);
-            console.log('🔍 First 3 transactions:', allTransactions.slice(0, 3));
-            
-            // Check if we have any phantom July 7th data
-            const july7Raw = allTransactions.filter(t => {
-                try {
-                    const dateStr = new Date(t.date).toISOString().split('T')[0];
-                    return dateStr === '2025-07-07';
-                } catch (e) {
-                    return false;
-                }
-            });
-            
-            if (july7Raw.length > 0) {
-                console.log('🚨 FOUND JULY 7TH TRANSACTIONS IN API RESPONSE:');
-                july7Raw.forEach((t, i) => {
-                    console.log(`  ${i + 1}. ID: ${t._id || 'NO_ID'} | Type: "${t.type}" | Amount: ${t.amount} | Description: "${t.description}"`);
-                });
-                console.log('🚨 These transactions SHOULD NOT EXIST according to your database check!');
-            } else {
-                console.log('✅ No July 7th transactions found in API response (as expected from DB)');
-            }
-            
             // Set all transactions for calculations
             setTransactions(allTransactions);
-            console.log('📊 Dashboard loaded with', allTransactions.length, 'total transactions');
-            
-            // Use case-insensitive filtering for type counts
-            const incomeTransactions = allTransactions.filter(t => (t.type || '').toString().trim().toLowerCase() === 'income');
-            const expenseTransactions = allTransactions.filter(t => (t.type || '').toString().trim().toLowerCase() === 'expense');
-            
-            console.log('💰 Income transactions:', incomeTransactions.length);
-            console.log('💸 Expense transactions:', expenseTransactions.length);
-            
-            // Debug: Check all transactions to see their types and dates
-            console.log('🔍 All transactions with types and dates:');
-            allTransactions.forEach((t, index) => {
-                const dateStr = new Date(t.date).toISOString().split('T')[0];
-                const formattedDate = formatDate(t.date);
-                console.log(`  ${index + 1}. ${dateStr} | Formatted: ${formattedDate} | Type: "${t.type}" (${typeof t.type}) | ${t.category} | ${t.description} | ₹${t.amount}`);
-                console.log(`    Raw date: "${t.date}"`);
-                console.log(`    Date object: ${new Date(t.date)}`);
-            });
-            
-            // Check for unique transaction types to identify case issues
-            const uniqueTypes = [...new Set(allTransactions.map(t => t.type))];
-            console.log('🔍 Unique transaction types found:', uniqueTypes);
-            
-            // Debug: Specifically look for July 7th transactions
-            const july7Transactions = allTransactions.filter(t => {
-                const dateStr = new Date(t.date).toISOString().split('T')[0];
-                return dateStr === '2025-07-07';
-            });
-            console.log('🗓️ July 7th transactions found:', july7Transactions.length);
-            july7Transactions.forEach(t => {
-                console.log(`   - Type: "${t.type}" (raw) | Category: "${t.category}" | Description: "${t.description}" | Amount: ${t.amount}`);
-            });
-            
-            // Check if July 7th transactions are expenses
-            const july7Expenses = july7Transactions.filter(t => (t.type || '').toString().trim().toLowerCase() === 'expense');
-            console.log('💸 July 7th EXPENSE transactions:', july7Expenses.length);
-            july7Expenses.forEach(t => {
-                console.log(`   - EXPENSE: "${t.description}" | Amount: ${t.amount}`);
-            });
             
             // Process expense category data
             const expenseCategories = expenseCategoryRes.map(item => ({
@@ -120,9 +44,6 @@ const Dashboard = ({ onError }) => {
                 value: item.total
             }));
             
-            console.log('📊 Expense categories:', expenseCategories.length);
-            console.log('💰 Income categories:', incomeCategories.length);
-            
             setCategoryData(expenseCategoryRes.map(item => ({
                 name: item._id,
                 value: item.total
@@ -135,23 +56,12 @@ const Dashboard = ({ onError }) => {
             const dailyExpenseMap = {};
             
             // Process all expense transactions to build daily totals
-            console.log('🔍 Starting expense transaction processing...');
             const expenseTransactionsForChart = allTransactions
                 .filter(t => {
                     // Handle case-insensitive and whitespace-tolerant type checking
                     const normalizedType = (t.type || '').toString().trim().toLowerCase();
-                    const isExpense = normalizedType === 'expense';
-                    
-                    console.log(`🔍 Transaction "${t.description}": type="${t.type}" normalized="${normalizedType}" isExpense=${isExpense}`);
-                    
-                    if (!isExpense && normalizedType) {
-                        console.log(`⚠️ Non-expense transaction type found: "${t.type}" (normalized: "${normalizedType}") - ${t.description}`);
-                    }
-                    
-                    return isExpense;
+                    return normalizedType === 'expense';
                 });
-                
-            console.log(`💸 Found ${expenseTransactionsForChart.length} expense transactions for chart processing`);
             
             expenseTransactionsForChart.forEach(transaction => {
                 // Handle both ISO format and various date formats
@@ -160,12 +70,10 @@ const Dashboard = ({ onError }) => {
                     const transactionDate = new Date(transaction.date);
                     // Ensure we're working with a valid date
                     if (isNaN(transactionDate.getTime())) {
-                        console.warn('⚠️ Invalid date format for transaction:', transaction);
                         return;
                     }
                     dateStr = transactionDate.toISOString().split('T')[0];
                 } catch (error) {
-                    console.warn('⚠️ Error parsing date for transaction:', transaction, error);
                     return;
                 }
                 
@@ -173,45 +81,14 @@ const Dashboard = ({ onError }) => {
                     dailyExpenseMap[dateStr] = 0;
                 }
                 dailyExpenseMap[dateStr] += transaction.amount;
-                
-                console.log(`📅 Processing expense: ${transaction.description} on ${dateStr} = ₹${transaction.amount} (type: "${transaction.type}")`);
             });
             
             // Also merge with backend date summary for consistency
-            console.log('📊 Backend date summary response:', dateRes);
             dateRes.forEach(item => {
-                console.log(`📅 Backend date entry: ${item._id} = ₹${item.total}`);
                 if (!dailyExpenseMap[item._id]) {
                     dailyExpenseMap[item._id] = item.total;
-                } else {
-                    // Use the higher value for consistency check
-                    if (Math.abs(dailyExpenseMap[item._id] - item.total) > 0.01) {
-                        console.warn('⚠️ Date data mismatch for', item._id, 'Frontend:', dailyExpenseMap[item._id], 'Backend:', item.total);
-                    }
                 }
             });
-            
-            console.log('📅 Daily expense data points:', Object.keys(dailyExpenseMap).length);
-            console.log('📅 Daily expense map:', dailyExpenseMap);
-            
-            // Check specifically for July 7th in the map
-            if (dailyExpenseMap['2025-07-07']) {
-                console.log('✅ July 7, 2025 found in daily expense map with total:', dailyExpenseMap['2025-07-07']);
-            } else {
-                console.log('❌ July 7, 2025 NOT found in daily expense map');
-            }
-            
-            // Check specifically for July 6th in the map (where the real data is)
-            if (dailyExpenseMap['2025-07-06']) {
-                console.log('✅ July 6, 2025 found in daily expense map with total:', dailyExpenseMap['2025-07-06']);
-            } else {
-                console.log('❌ July 6, 2025 NOT found in daily expense map');
-            }
-            
-            console.log('Available dates in map:', Object.keys(dailyExpenseMap).sort());
-            console.log('💸 Sample daily data:', Object.entries(dailyExpenseMap).slice(0, 5));
-            console.log('📊 All expense transactions dates:', allTransactions.filter(t => t.type === 'expense').map(t => t.date.split('T')[0]).sort());
-            console.log('🗓️ Full dailyExpenseMap:', dailyExpenseMap);
             
             // Get date range - show a reasonable range that includes all data
             let minDate, maxDate;
@@ -254,7 +131,7 @@ const Dashboard = ({ onError }) => {
                 minDate.setDate(today.getDate() - 29);
             }
             
-            console.log('📅 Date range for chart:', minDate.toISOString().split('T')[0], 'to', maxDate.toISOString().split('T')[0]);                const filledDateData = [];
+            const filledDateData = [];
             const currentDate = new Date(minDate);
             
             while (currentDate <= maxDate) {
@@ -276,10 +153,6 @@ const Dashboard = ({ onError }) => {
             }
             
             setDateData(filledDateData);
-            console.log('📊 Final date data length:', filledDateData.length);
-            console.log('📈 Non-zero date entries:', filledDateData.filter(d => d.amount > 0).length);
-            console.log('📊 Date data sample:', filledDateData.slice(0, 5));
-            console.log('📊 Non-zero entries sample:', filledDateData.filter(d => d.amount > 0).slice(0, 3));
             
             // Calculate monthly data for income vs expense comparison
             const monthlyMap = {};
@@ -308,7 +181,6 @@ const Dashboard = ({ onError }) => {
             setMonthlyData(monthlyArray);
             
         } catch (err) {
-            console.error('❌ Dashboard data fetch error:', err);
             if (onError && typeof onError === 'function') {
                 onError(err.message);
             }
@@ -335,33 +207,6 @@ const Dashboard = ({ onError }) => {
 
     return (
         <div className="space-y-6">
-            {/* Debug Info (temporary) */}
-            {process.env.NODE_ENV === 'development' && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm">
-                    <details>
-                        <summary className="cursor-pointer font-medium text-yellow-800">🐛 Debug Info (Click to expand)</summary>
-                        <div className="mt-2 space-y-1 text-yellow-700">
-                            <p>Total transactions: {transactions.length}</p>
-                            <p>Expense transactions: {transactions.filter(t => t.type === 'expense').length}</p>
-                            <p>Income transactions: {transactions.filter(t => t.type === 'income').length}</p>
-                            <p>Date data points: {dateData.length}</p>
-                            <p>Non-zero date points: {dateData.filter(d => d.amount > 0).length}</p>
-                            <p>Expense categories: {expenseCategoryData.length}</p>
-                            <p>Income categories: {incomeCategoryData.length}</p>
-                            {dateData.length > 0 && (
-                                <p>Chart date range: {dateData[0]?.date} to {dateData[dateData.length - 1]?.date}</p>
-                            )}
-                            {transactions.filter(t => t.type === 'expense').length > 0 && (
-                                <p>Expense dates: {transactions.filter(t => t.type === 'expense').map(t => new Date(t.date).toISOString().split('T')[0]).sort().join(', ')}</p>
-                            )}
-                            {dateData.filter(d => d.amount > 0).length > 0 && (
-                                <p>Sample expense dates: {dateData.filter(d => d.amount > 0).slice(0, 3).map(d => `${d.date}:₹${d.amount}`).join(', ')}</p>
-                            )}
-                        </div>
-                    </details>
-                </div>
-            )}
-
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white rounded-lg shadow p-6">
